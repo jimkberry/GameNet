@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>    
+  </PropertyGroup>
+
+  <ItemGroup>
+      <ProjectReference Include="..\P2pNet\P2pNet.csproj" />  
+  </ItemGroup>
+
+</Project>
