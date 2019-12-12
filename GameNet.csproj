@@ -6,7 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-      <ProjectReference Include="..\P2pNet\P2pNet.csproj" />  
+      <ProjectReference Include="..\P2pNet\P2pNet.csproj" />
+      <ProjectReference Include="..\UniLog\UniLog.csproj" />  
   </ItemGroup>
 
 </Project>

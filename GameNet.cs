@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using P2pNet;
+using UniLog;
 
 namespace GameNet
 {
@@ -40,8 +41,8 @@ namespace GameNet
     {
         protected IGameNetClient client = null;
         protected IP2pNet p2p = null;
-
         protected string CurrentGameId {private set; get;}
+        public UniLogger logger;
 
         // Some client callbacks can happen as a direct result of a call, but we would like for
         // them to be dispatched during poll(), rather than during th ecall itself. Put them 
@@ -53,6 +54,7 @@ namespace GameNet
         public GameNetBase()
         {
             callbacksForNextPoll = new Queue<Action>();
+            logger = UniLogger.GetLogger("GameNet");
         }
 
         public void Init(IGameNetClient _client)
