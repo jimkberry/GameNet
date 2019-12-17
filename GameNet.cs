@@ -27,7 +27,7 @@ namespace GameNet
         void OnPlayerJoined(string p2pId, string helloData);
         void OnPlayerLeft(string p2pId);
         void OnP2pMsg(string from, string to, string payload);
-        string LocalPlayerData();
+        string LocalPlayerData(); // client serializes this app-specific stuff
     }
 
     public class GameNetP2pMessage
@@ -145,7 +145,7 @@ namespace GameNet
         public string P2pHelloData() 
         {
             // TODO: might want to put localPlayerData into a larger GameNet-level object
-            return client.LocalPlayerData(); // LocalPlayerData() result is already serialized by app
+            return client.LocalPlayerData(); // Client (which knows about the fnal class) serializes this
         }
         public void OnPeerJoined(string p2pId, string helloData)
         {
