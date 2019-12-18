@@ -24,10 +24,10 @@ namespace GameNet
         void SetGameNetInstance(IGameNet iGameNetInstance);     
         void OnGameCreated(string gameP2pChannel);
         void OnGameJoined(string gameId, string localP2pId);
-        void OnPlayerJoined(string p2pId, string helloData);
-        void OnPlayerLeft(string p2pId);
+        void OnPeerJoined(string p2pId, string helloData);
+        void OnPeerLeft(string p2pId);
         void OnP2pMsg(string from, string to, string payload);
-        string LocalPlayerData(); // client serializes this app-specific stuff
+        string LocalPeerData(); // client serializes this app-specific stuff
     }
 
     public class GameNetP2pMessage
@@ -107,9 +107,9 @@ namespace GameNet
 
         public virtual void JoinGame(string gameP2pChannel)
         {
-            string localP2pId = p2p.Join(gameP2pChannel);
+            p2p.Join(gameP2pChannel);
             CurrentGameId = gameP2pChannel;
-            callbacksForNextPoll.Enqueue( () => client.OnGameJoined(gameP2pChannel, localP2pId));
+            callbacksForNextPoll.Enqueue( () => client.OnGameJoined(gameP2pChannel, LocalP2pId()));
         }
         public virtual void LeaveGame()
         {
@@ -145,16 +145,17 @@ namespace GameNet
         public string P2pHelloData() 
         {
             // TODO: might want to put localPlayerData into a larger GameNet-level object
-            return client.LocalPlayerData(); // Client (which knows about the fnal class) serializes this
+            return client.LocalPeerData(); // Client (which knows about the fnal class) serializes this
         }
         public void OnPeerJoined(string p2pId, string helloData)
         {
             // See P2pHelloData() comment regarding actual data struct
-            client.OnPlayerJoined(p2pId, helloData);
+            logger.Debug($"OnPeerJoined(): {helloData}");
+            client.OnPeerJoined(p2pId, helloData);
         }
         public void OnPeerLeft(string p2pId)
         {
-
+            client.OnPeerLeft(p2pId);
         }
         public void OnP2pMsg(string from, string to, string payload)
         {
