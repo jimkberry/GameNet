@@ -15,7 +15,7 @@ namespace GameNet
         void JoinGame(string gameP2pChannel);
         void LeaveGame();
         string LocalP2pId();
-        void SendP2pMsg(string toChan, string payload);
+        string CurrentGameId();
         void Loop(); /// <summary> needs to be called periodically (drives message pump + group handling)</summary>       
     }
 
@@ -26,14 +26,14 @@ namespace GameNet
         void OnGameJoined(string gameId, string localP2pId);
         void OnPeerJoined(string p2pId, string helloData);
         void OnPeerLeft(string p2pId);
-        void OnP2pMsg(string from, string to, string payload);
+        //void OnP2pMsg(string from, string to, string payload);
         string LocalPeerData(); // client serializes this app-specific stuff
     }
 
-    public class GameNetP2pMessage
-    {
-        public const string MsgBase = "BASEMSG";  // untyped "SendP2pMsg()/OnP2pMsg()" msg.    
-        public string appMsgType;
+    // used internally
+    public class GameNetClientMessage
+    {   
+        public string clientMsgType;
         public string payload; // string or json-encoded application object
     }    
 
@@ -41,7 +41,6 @@ namespace GameNet
     {
         protected IGameNetClient client = null;
         protected IP2pNet p2p = null;
-        protected string CurrentGameId {private set; get;}
         public UniLogger logger;
 
         // Some client callbacks can happen as a direct result of a call, but we would like for
@@ -79,6 +78,9 @@ namespace GameNet
                 case "p2predis":
                     p2p = new P2pRedis(this, parts[1]);
                     break;
+                case "p2ploopback":
+                    p2p = new P2pLoopback(this, null);
+                    break;                    
                 default:
                     throw( new Exception($"Invalid connection type: {parts[0]}"));
             }
@@ -91,6 +93,7 @@ namespace GameNet
         { 
             if (p2p?.GetId() != null)
                 p2p.Leave(); 
+            p2p = null;
         }
 
         // TODO: need "Destroy() or Reset() or (Init)" to null out P2pNet instance? Don;t want to destroy instance immediately on Leave()
@@ -108,7 +111,6 @@ namespace GameNet
         public virtual void JoinGame(string gameP2pChannel)
         {
             p2p.Join(gameP2pChannel);
-            CurrentGameId = gameP2pChannel;
             callbacksForNextPoll.Enqueue( () => client.OnGameJoined(gameP2pChannel, LocalP2pId()));
         }
         public virtual void LeaveGame()
@@ -116,11 +118,6 @@ namespace GameNet
             throw(new Exception("Not implemented yet"));
         }
 
-        public virtual void SendP2pMsg(string toChan, string payload) // TODO: Is there any point in this "generic" message function?
-        {
-            string appMsgJSON = JsonConvert.SerializeObject(new GameNetP2pMessage(){appMsgType=GameNetP2pMessage.MsgBase, payload=payload});
-            p2p.Send(toChan, appMsgJSON);
-        }
 
         public virtual void Loop()
         {
@@ -134,10 +131,8 @@ namespace GameNet
             p2p?.Loop();
         }
 
-        public string LocalP2pId()
-        {
-            return p2p?.GetId();
-        }
+        public string LocalP2pId() => p2p?.GetId();
+        public string CurrentGameId() => p2p?.GetMainChannel();
 
         //
         // IP2pNetClient
@@ -157,9 +152,24 @@ namespace GameNet
         {
             client.OnPeerLeft(p2pId);
         }
-        public void OnP2pMsg(string from, string to, string payload)
+
+        public void OnClientMsg(string from, string to, string payload)
         {
-            client.OnP2pMsg(from, to, payload);
+            GameNetClientMessage gameNetClientMessage = JsonConvert.DeserializeObject<GameNetClientMessage>(payload);
+            _HandleClientMessage(from, to, gameNetClientMessage);
         }
+
+        // Derived classes Must implment this, as well as client-specific messages 
+        // that call _SendClientMessage()
+
+        protected abstract void _HandleClientMessage(string from, string to, GameNetClientMessage clientMessage);
+
+
+        protected void _SendClientMessage(string _toChan, string _clientMsgType, string _payload)
+        {
+            string gameNetClientMsgJSON = JsonConvert.SerializeObject(new GameNetClientMessage(){clientMsgType=_clientMsgType, payload=_payload});
+            p2p.Send(_toChan, gameNetClientMsgJSON);            
+        }
+
     }
 }
