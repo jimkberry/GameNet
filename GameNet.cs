@@ -80,7 +80,10 @@ namespace GameNet
                     break;
                 case "p2ploopback":
                     p2p = new P2pLoopback(this, null);
-                    break;                    
+                    break;          
+                case "p2pactivemq":
+                    p2p = new P2pActiveMq(this, parts[1]);
+                    break;                               
                 default:
                     throw( new Exception($"Invalid connection type: {parts[0]}"));
             }
