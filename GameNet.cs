@@ -62,34 +62,34 @@ namespace GameNet
             _client.SetGameNetInstance(this);
         }
 
-        //
-        // IGameNet
-        //
-        public virtual void Connect( string p2pConectionString )
+        // Override this to account for P2pNet implmentations you support
+        protected virtual IP2pNet P2pNetFactory(string p2pConnectionString)
         {
-            // P2pConnectionString is <p2p implmentation name>::<imp-dependent connection string>
-            // Names are: p2predis
-
-            p2p = null;
-            string[] parts = p2pConectionString.Split(new string[]{"::"},StringSplitOptions.None); // Yikes! This is fugly.
+            // P2pConnectionString is <p2p implmentation name>::<imp-dependent connection string>            
+            IP2pNet ip2p = null;
+            string[] parts = p2pConnectionString.Split(new string[]{"::"},StringSplitOptions.None); // Yikes! This is fugly.
 
             switch(parts[0].ToLower())
             {
-                case "p2predis":
-                    p2p = new P2pRedis(this, parts[1]);
-                    break;
                 case "p2ploopback":
-                    p2p = new P2pLoopback(this, null);
-                    break;          
-                case "p2pactivemq":
-                    p2p = new P2pActiveMq(this, parts[1]);
-                    break;                               
+                    ip2p = new P2pLoopback(this, null);
+                    break;                                      
                 default:
                     throw( new Exception($"Invalid connection type: {parts[0]}"));
             }
 
-            if (p2p == null)
+            if (ip2p == null)
                 throw( new Exception("p2p Connect failed"));
+
+            return ip2p;            
+        }
+
+        //
+        // IGameNet
+        //
+        public virtual void Connect( string p2pConnectionString )
+        {
+            p2p = P2pNetFactory(p2pConnectionString);
         }
 
         public virtual void Disconnect() 
