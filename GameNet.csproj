@@ -4,9 +4,13 @@
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>    
   </PropertyGroup>
-
+  
   <ItemGroup>
-      <ProjectReference Include="..\P2pNet\src\P2pNet.Base\P2pNet.Base.csproj" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
+  </ItemGroup>
+  
+  <ItemGroup>
+      <ProjectReference Include="..\P2pNet\P2pNet.Base\P2pNet.Base.csproj" />
       <ProjectReference Include="..\UniLog\UniLog.csproj" />  
   </ItemGroup>
 
