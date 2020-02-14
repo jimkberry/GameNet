@@ -156,16 +156,16 @@ namespace GameNet
             client.OnPeerLeft(p2pId);
         }
 
-        public void OnClientMsg(string from, string to, string payload)
+        public void OnClientMsg(string from, string to, long msSinceSent, string payload)
         {
             GameNetClientMessage gameNetClientMessage = JsonConvert.DeserializeObject<GameNetClientMessage>(payload);
-            _HandleClientMessage(from, to, gameNetClientMessage);
+            _HandleClientMessage(from, to, msSinceSent, gameNetClientMessage);
         }
 
         // Derived classes Must implment this, as well as client-specific messages 
         // that call _SendClientMessage()
 
-        protected abstract void _HandleClientMessage(string from, string to, GameNetClientMessage clientMessage);
+        protected abstract void _HandleClientMessage(string from, string to, long msSinceSent, GameNetClientMessage clientMessage);
 
 
         protected void _SendClientMessage(string _toChan, string _clientMsgType, string _payload)
