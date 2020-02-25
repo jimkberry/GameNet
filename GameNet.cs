@@ -56,7 +56,7 @@ namespace GameNet
             logger = UniLogger.GetLogger("GameNet");
         }
 
-        public void Init(IGameNetClient _client)
+        public virtual void Init(IGameNetClient _client)
         {
             client = _client;
             _client.SetGameNetInstance(this);
