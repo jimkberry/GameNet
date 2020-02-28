@@ -25,6 +25,7 @@ namespace GameNet
         void OnGameCreated(string gameP2pChannel);
         void OnGameJoined(string gameId, string localP2pId);
         void OnPeerJoined(string p2pId, string helloData);
+        void OnPeerSync(string p2pId, long clockOffsetMs, long netLagMs);        
         void OnPeerLeft(string p2pId);
         //void OnP2pMsg(string from, string to, string payload);
         string LocalPeerData(); // client serializes this app-specific stuff
@@ -120,8 +121,6 @@ namespace GameNet
         {
             throw(new Exception("Not implemented yet"));
         }
-
-
         public virtual void Loop()
         {
             // Dispatch any locally-enqueued actions
@@ -148,9 +147,14 @@ namespace GameNet
         public void OnPeerJoined(string p2pId, string helloData)
         {
             // See P2pHelloData() comment regarding actual data struct
-            logger.Debug($"OnPeerJoined(): {helloData}");
             client.OnPeerJoined(p2pId, helloData);
         }
+
+        public void OnPeerSync(string p2pId, long clockOffsetMs, long netLagMs)
+        {
+            client.OnPeerSync(p2pId, clockOffsetMs, netLagMs);            
+        }
+
         public void OnPeerLeft(string p2pId)
         {
             client.OnPeerLeft(p2pId);
