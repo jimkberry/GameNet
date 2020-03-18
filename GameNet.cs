@@ -13,6 +13,8 @@ namespace GameNet
         void Disconnect();
         void CreateGame<T>(T createGameData);
         void JoinGame(string gameP2pChannel);
+        void AddChannel(string subChannel);
+        void RemoveChannel(string subchannel);
         void LeaveGame();
         string LocalP2pId();
         string CurrentGameId();
@@ -121,6 +123,16 @@ namespace GameNet
         {
             throw(new Exception("Not implemented yet"));
         }
+
+        public virtual void AddChannel(string subChannel)
+        {
+            p2p.AddSubchannel(subChannel);
+        }
+        public virtual void RemoveChannel(string subChannel)
+        {
+            p2p.RemoveSubchannel(subChannel);
+        }
+
         public virtual void Loop()
         {
             // Dispatch any locally-enqueued actions
