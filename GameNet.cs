@@ -109,7 +109,7 @@ namespace GameNet
         protected void _SyncTrivialNewGame()
         {
             // The basics. Implementations *might* call this
-            string newGameId = System.Guid.NewGuid().ToString();
+            string newGameId = "BEAMGAME" + System.Guid.NewGuid().ToString();
             callbacksForNextPoll.Enqueue( () => client.OnGameCreated(newGameId));
         }
 
