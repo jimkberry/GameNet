@@ -26,6 +26,7 @@ namespace GameNet
         void SetGameNetInstance(IGameNet iGameNetInstance);     
         void OnGameCreated(string gameP2pChannel);
         void OnGameJoined(string gameId, string localP2pId);
+        void OnGameLeft();        
         void OnPeerJoined(string p2pId, string helloData);
         void OnPeerSync(string p2pId, long clockOffsetMs, long netLagMs);        
         void OnPeerLeft(string p2pId);
@@ -121,7 +122,8 @@ namespace GameNet
         }
         public virtual void LeaveGame()
         {
-            throw(new Exception("Not implemented yet"));
+            p2p.Leave();     
+            callbacksForNextPoll.Enqueue( () => client.OnGameLeft());                   
         }
 
         public virtual void AddChannel(string subChannel)
