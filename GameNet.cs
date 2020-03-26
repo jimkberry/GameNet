@@ -94,6 +94,7 @@ namespace GameNet
         public virtual void Connect( string p2pConnectionString )
         {
             p2p = P2pNetFactory(p2pConnectionString);
+            client.OnPeerJoined(p2p.GetId(), client.LocalPeerData());
         }
 
         public virtual void Disconnect() 
