@@ -25,12 +25,9 @@ namespace GameNet
     {
         void SetGameNetInstance(IGameNet iGameNetInstance);     
         void OnGameCreated(string gameP2pChannel);
-        void OnGameJoined(string gameId, string localP2pId);
-        void OnGameLeft();        
-        void OnPeerJoined(string p2pId, string helloData);
-        void OnPeerSync(string p2pId, long clockOffsetMs, long netLagMs);        
-        void OnPeerLeft(string p2pId);
-        //void OnP2pMsg(string from, string to, string payload);
+        void OnPeerJoinedGame(string peerId, string gameId, string helloData);
+        void OnPeerLeftGame(string p2pId, string gameId);         
+        void OnPeerSync(string p2pId, long clockOffsetMs, long netLagMs);
         string LocalPeerData(); // client serializes this app-specific stuff
     }
 
@@ -43,6 +40,9 @@ namespace GameNet
 
     public abstract class GameNetBase : IGameNet, IP2pNetClient
     {
+        //
+        // This is a single game GameNet base implementation
+        //
         protected IGameNetClient client = null;
         protected IP2pNet p2p = null;
         public UniLogger logger;
@@ -94,7 +94,6 @@ namespace GameNet
         public virtual void Connect( string p2pConnectionString )
         {
             p2p = P2pNetFactory(p2pConnectionString);
-            client.OnPeerJoined(p2p.GetId(), client.LocalPeerData());
         }
 
         public virtual void Disconnect() 
@@ -119,12 +118,13 @@ namespace GameNet
         public virtual void JoinGame(string gameP2pChannel)
         {
             p2p.Join(gameP2pChannel);
-            callbacksForNextPoll.Enqueue( () => client.OnGameJoined(gameP2pChannel, LocalP2pId()));
+            callbacksForNextPoll.Enqueue( () => client.OnPeerJoinedGame(LocalP2pId(), gameP2pChannel, client.LocalPeerData()));
+
         }
         public virtual void LeaveGame()
         {
+            callbacksForNextPoll.Enqueue( () => client.OnPeerLeftGame(LocalP2pId(), CurrentGameId()));              
             p2p.Leave();     
-            callbacksForNextPoll.Enqueue( () => client.OnGameLeft());                   
         }
 
         public virtual void AddChannel(string subChannel)
@@ -162,7 +162,7 @@ namespace GameNet
         public void OnPeerJoined(string p2pId, string helloData)
         {
             // See P2pHelloData() comment regarding actual data struct
-            client.OnPeerJoined(p2pId, helloData);
+            client.OnPeerJoinedGame(p2pId, CurrentGameId(), helloData);
         }
 
         public void OnPeerSync(string p2pId, long clockOffsetMs, long netLagMs)
@@ -172,7 +172,7 @@ namespace GameNet
 
         public void OnPeerLeft(string p2pId)
         {
-            client.OnPeerLeft(p2pId);
+            client.OnPeerLeftGame(p2pId, CurrentGameId());
         }
 
         public void OnClientMsg(string from, string to, long msSinceSent, string payload)
