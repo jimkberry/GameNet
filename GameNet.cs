@@ -8,8 +8,8 @@ namespace GameNet
 {
     public interface IGameNet
     {
-        void Init(IGameNetClient _client); // TODO: maybe config stuff too?
         void Connect( string p2pConectionString );
+        void SetClient(IGameNetClient _client);
         void Disconnect();
         void CreateGame<T>(T createGameData);
         void JoinGame(string gameP2pChannel);
@@ -18,25 +18,25 @@ namespace GameNet
         void LeaveGame();
         string LocalP2pId();
         string CurrentGameId();
-        void Loop(); /// <summary> needs to be called periodically (drives message pump + group handling)</summary>       
+        void Loop(); /// <summary> needs to be called periodically (drives message pump + group handling)</summary>
     }
 
     public interface IGameNetClient
     {
-        void SetGameNetInstance(IGameNet iGameNetInstance);     
+        void SetGameNetInstance(IGameNet iGameNetInstance);
         void OnGameCreated(string gameP2pChannel);
         void OnPeerJoinedGame(string peerId, string gameId, string helloData);
-        void OnPeerLeftGame(string p2pId, string gameId);         
+        void OnPeerLeftGame(string p2pId, string gameId);
         void OnPeerSync(string p2pId, long clockOffsetMs, long netLagMs);
         string LocalPeerData(); // client serializes this app-specific stuff
     }
 
     // used internally
     public class GameNetClientMessage
-    {   
+    {
         public string clientMsgType;
         public string payload; // string or json-encoded application object
-    }    
+    }
 
     public abstract class GameNetBase : IGameNet, IP2pNetClient
     {
@@ -48,11 +48,11 @@ namespace GameNet
         public UniLogger logger;
 
         // Some client callbacks can happen as a direct result of a call, but we would like for
-        // them to be dispatched during poll(), rather than during th ecall itself. Put them 
+        // them to be dispatched during poll(), rather than during th ecall itself. Put them
         // in this queue and it'll happen that way.
         // OnGameCreated() is an example of one that might take a while, or might
         // happen immediately.
-        protected Queue<Action> callbacksForNextPoll; 
+        protected Queue<Action> callbacksForNextPoll;
 
         public GameNetBase()
         {
@@ -60,16 +60,16 @@ namespace GameNet
             logger = UniLogger.GetLogger("GameNet");
         }
 
-        public virtual void Init(IGameNetClient _client)
+        public virtual void SetClient(IGameNetClient _client)
         {
             client = _client;
             _client.SetGameNetInstance(this);
         }
 
-        // Override this to account for P2pNet implmentations you support
+        // Override this to account for P2pNet implementations you support
         protected virtual IP2pNet P2pNetFactory(string p2pConnectionString)
         {
-            // P2pConnectionString is <p2p implmentation name>::<imp-dependent connection string>            
+            // P2pConnectionString is <p2p implmentation name>::<imp-dependent connection string>
             IP2pNet ip2p = null;
             string[] parts = p2pConnectionString.Split(new string[]{"::"},StringSplitOptions.None); // Yikes! This is fugly.
 
@@ -77,7 +77,7 @@ namespace GameNet
             {
                 case "p2ploopback":
                     ip2p = new P2pLoopback(this, null);
-                    break;                                      
+                    break;
                 default:
                     throw( new Exception($"Invalid connection type: {parts[0]}"));
             }
@@ -85,7 +85,7 @@ namespace GameNet
             if (ip2p == null)
                 throw( new Exception("p2p Connect failed"));
 
-            return ip2p;            
+            return ip2p;
         }
 
         //
@@ -96,10 +96,10 @@ namespace GameNet
             p2p = P2pNetFactory(p2pConnectionString);
         }
 
-        public virtual void Disconnect() 
-        { 
+        public virtual void Disconnect()
+        {
             if (p2p?.GetId() != null)
-                p2p.Leave(); 
+                p2p.Leave();
             p2p = null;
         }
 
@@ -123,8 +123,8 @@ namespace GameNet
         }
         public virtual void LeaveGame()
         {
-            callbacksForNextPoll.Enqueue( () => client.OnPeerLeftGame(LocalP2pId(), CurrentGameId()));              
-            p2p.Leave();     
+            callbacksForNextPoll.Enqueue( () => client.OnPeerLeftGame(LocalP2pId(), CurrentGameId()));
+            p2p.Leave();
         }
 
         public virtual void AddChannel(string subChannel)
@@ -154,7 +154,7 @@ namespace GameNet
         //
         // IP2pNetClient
         //
-        public string P2pHelloData() 
+        public string P2pHelloData()
         {
             // TODO: might want to put localPlayerData into a larger GameNet-level object
             return client.LocalPeerData(); // Client (which knows about the fnal class) serializes this
@@ -167,7 +167,7 @@ namespace GameNet
 
         public void OnPeerSync(string p2pId, long clockOffsetMs, long netLagMs)
         {
-            client.OnPeerSync(p2pId, clockOffsetMs, netLagMs);            
+            client.OnPeerSync(p2pId, clockOffsetMs, netLagMs);
         }
 
         public void OnPeerLeft(string p2pId)
@@ -181,7 +181,7 @@ namespace GameNet
             _HandleClientMessage(from, to, msSinceSent, gameNetClientMessage);
         }
 
-        // Derived classes Must implment this, as well as client-specific messages 
+        // Derived classes Must implment this, as well as client-specific messages
         // that call _SendClientMessage()
 
         protected abstract void _HandleClientMessage(string from, string to, long msSinceSent, GameNetClientMessage clientMessage);
@@ -190,7 +190,7 @@ namespace GameNet
         protected void _SendClientMessage(string _toChan, string _clientMsgType, string _payload)
         {
             string gameNetClientMsgJSON = JsonConvert.SerializeObject(new GameNetClientMessage(){clientMsgType=_clientMsgType, payload=_payload});
-            p2p.Send(_toChan, gameNetClientMsgJSON);            
+            p2p.Send(_toChan, gameNetClientMsgJSON);
         }
 
     }
