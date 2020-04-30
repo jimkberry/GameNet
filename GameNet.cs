@@ -118,7 +118,7 @@ namespace GameNet
         public virtual void JoinGame(string gameP2pChannel)
         {
             p2p.Join(gameP2pChannel);
-            callbacksForNextPoll.Enqueue( () => client.OnPeerJoinedGame(LocalP2pId(), gameP2pChannel, client.LocalPeerData()));
+            callbacksForNextPoll.Enqueue( () => this.OnPeerJoined( LocalP2pId(),  client.LocalPeerData()));
 
         }
         public virtual void LeaveGame()
@@ -154,23 +154,23 @@ namespace GameNet
         //
         // IP2pNetClient
         //
-        public string P2pHelloData()
+        public virtual string P2pHelloData()
         {
             // TODO: might want to put localPlayerData into a larger GameNet-level object
             return client.LocalPeerData(); // Client (which knows about the fnal class) serializes this
         }
-        public void OnPeerJoined(string p2pId, string helloData)
+        public virtual void OnPeerJoined(string p2pId, string helloData)
         {
             // See P2pHelloData() comment regarding actual data struct
             client.OnPeerJoinedGame(p2pId, CurrentGameId(), helloData);
         }
 
-        public void OnPeerSync(string p2pId, long clockOffsetMs, long netLagMs)
+        public virtual void OnPeerSync(string p2pId, long clockOffsetMs, long netLagMs)
         {
             client.OnPeerSync(p2pId, clockOffsetMs, netLagMs);
         }
 
-        public void OnPeerLeft(string p2pId)
+        public virtual void OnPeerLeft(string p2pId)
         {
             client.OnPeerLeftGame(p2pId, CurrentGameId());
         }
