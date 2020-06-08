@@ -53,10 +53,12 @@ namespace GameNet
         // OnGameCreated() is an example of one that might take a while, or might
         // happen immediately.
         protected Queue<Action> callbacksForNextPoll;
+        protected Queue<Action> loopedBackMessageHandlers; // messages that come from this node (loopbacks) get handled at the end of the loop
 
         public GameNetBase()
         {
             callbacksForNextPoll = new Queue<Action>();
+            loopedBackMessageHandlers  = new Queue<Action>();
             logger = UniLogger.GetLogger("GameNet");
         }
 
@@ -146,6 +148,14 @@ namespace GameNet
             }
 
             p2p?.Loop();
+
+            // and any looped-back local messages
+            while(loopedBackMessageHandlers.Count != 0)
+            {
+                Action action = loopedBackMessageHandlers.Dequeue();
+                action();
+            }
+
         }
 
         public string LocalP2pId() => p2p?.GetId();
@@ -178,7 +188,12 @@ namespace GameNet
         public void OnClientMsg(string from, string to, long msSinceSent, string payload)
         {
             GameNetClientMessage gameNetClientMessage = JsonConvert.DeserializeObject<GameNetClientMessage>(payload);
-            _HandleClientMessage(from, to, msSinceSent, gameNetClientMessage);
+
+            if (from == LocalP2pId())
+                loopedBackMessageHandlers.Enqueue( () => _HandleClientMessage(from, to, msSinceSent, gameNetClientMessage));
+            else
+                _HandleClientMessage(from, to, msSinceSent, gameNetClientMessage);
+
         }
 
         // Derived classes Must implment this, as well as client-specific messages
