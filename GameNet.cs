@@ -147,14 +147,14 @@ namespace GameNet
                 action();
             }
 
-            p2p?.Loop();
-
-            // and any looped-back local messages
+            // and any looped-back local messages from the previous Loop()
             while(loopedBackMessageHandlers.Count != 0)
             {
                 Action action = loopedBackMessageHandlers.Dequeue();
                 action();
             }
+
+            p2p?.Loop();
 
         }
 
